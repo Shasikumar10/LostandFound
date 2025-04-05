@@ -17,11 +17,16 @@ export interface User {
   phone?: string;
   bio?: string;
   profileImageUrl?: string;
+  role?: "student" | "admin";
 }
 
 export interface ItemLocation {
   name: string;
   description?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface ItemContact {

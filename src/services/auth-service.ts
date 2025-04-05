@@ -1,3 +1,4 @@
+
 import { User } from "@/types";
 
 // This is a mock authentication service
@@ -9,7 +10,14 @@ const mockUsers: User[] = [
   {
     id: "1",
     email: "demo@example.com",
-    name: "Demo User"
+    name: "Demo User",
+    role: "student"
+  },
+  {
+    id: "2",
+    email: "admin@klh.edu.in",
+    name: "Admin User",
+    role: "admin"
   }
 ];
 
@@ -30,9 +38,16 @@ export const authService = {
     return user;
   },
   
-  register: async (email: string, password: string, name?: string): Promise<User> => {
+  register: async (email: string, password: string, name?: string, role: "student" | "admin" = "student"): Promise<User> => {
     // Simulate network delay
     await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Validate email format based on role
+    if (role === "student" && !email.match(/^[0-9]+@klh\.edu\.in$/)) {
+      throw new Error("Student email must be in format: roll_no@klh.edu.in");
+    } else if (role === "admin" && !email.match(/^[a-zA-Z]+@klh\.edu\.in$/)) {
+      throw new Error("Admin email must be in format: name@klh.edu.in");
+    }
     
     if (mockUsers.some(u => u.email === email)) {
       throw new Error("User already exists");
@@ -41,7 +56,8 @@ export const authService = {
     const newUser: User = {
       id: String(mockUsers.length + 1),
       email,
-      name
+      name,
+      role
     };
     
     mockUsers.push(newUser);
@@ -80,5 +96,14 @@ export const authService = {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
     
     return updatedUser;
+  },
+  
+  validateEmail: (email: string, role: "student" | "admin"): boolean => {
+    if (role === "student") {
+      return /^[0-9]+@klh\.edu\.in$/.test(email);
+    } else if (role === "admin") {
+      return /^[a-zA-Z]+@klh\.edu\.in$/.test(email);
+    }
+    return false;
   }
 };

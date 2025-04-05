@@ -1,3 +1,4 @@
+
 import { User } from "@/types";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { authService } from "@/services/auth-service";
@@ -7,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (email: string, password: string, name?: string, role?: "student" | "admin") => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (updatedUser: User) => void;
 }
@@ -47,10 +48,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (email: string, password: string, name?: string) => {
+  const register = async (email: string, password: string, name?: string, role: "student" | "admin" = "student") => {
     try {
       setLoading(true);
-      const user = await authService.register(email, password, name);
+      const user = await authService.register(email, password, name, role);
       setUser(user);
       toast({
         title: "Registration successful",
@@ -86,10 +87,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateUser = (updatedUser: User) => {
-    // Update user in local storage
-    localStorage.setItem("klh_user", JSON.stringify(updatedUser));
-    // Update user in state
-    setUser(updatedUser);
+    const updated = authService.updateUser(updatedUser);
+    setUser(updated);
   };
 
   return (
