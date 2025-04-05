@@ -15,13 +15,29 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [role, setRole] = useState<"student" | "admin">("student");
+  const [emailError, setEmailError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  const validateEmail = () => {
+    if (!email) return false;
+    
+    if (role === "student" && !email.match(/^[0-9]+@klh\.edu\.in$/)) {
+      setEmailError("Student email must be in format: roll_no@klh.edu.in");
+      return false;
+    } else if (role === "admin" && !email.match(/^[a-zA-Z]+@klh\.edu\.in$/)) {
+      setEmailError("Admin email must be in format: name@klh.edu.in");
+      return false;
+    }
+    
+    setEmailError("");
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!email || !password) {
+    if (!validateEmail() || !password) {
       return;
     }
     
@@ -40,27 +56,33 @@ export default function LoginPage() {
   const handleRoleChange = (value: string) => {
     setRole(value as "student" | "admin");
     setEmail(""); // Clear email when changing roles for fresh input
+    setEmailError("");
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-background to-muted">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-sky-50 to-indigo-50">
       <NavBar />
       
       <main className="flex-1 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md shadow-lg border-primary/10">
-          <CardHeader className="space-y-1 text-center">
-            <CardTitle className="text-2xl font-bold text-primary">KLH Login</CardTitle>
+        <Card className="w-full max-w-md shadow-lg border-primary/10 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-purple-500/5 pointer-events-none" />
+          
+          <CardHeader className="space-y-1 text-center relative">
+            <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500" />
+            <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              KLH Lost & Found
+            </CardTitle>
             <CardDescription>
-              Enter your credentials to access your account
+              Sign in to your account to manage lost and found items
             </CardDescription>
           </CardHeader>
           
           <Tabs defaultValue="student" className="w-full" onValueChange={handleRoleChange}>
             <TabsList className="grid grid-cols-2 mb-4 mx-4">
-              <TabsTrigger value="student" className="flex items-center gap-2">
+              <TabsTrigger value="student" className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700">
                 <School className="h-4 w-4" /> Student
               </TabsTrigger>
-              <TabsTrigger value="admin" className="flex items-center gap-2">
+              <TabsTrigger value="admin" className="flex items-center gap-2 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
                 <UserCog className="h-4 w-4" /> Admin
               </TabsTrigger>
             </TabsList>
@@ -78,11 +100,16 @@ export default function LoginPage() {
                         placeholder="123456@klh.edu.in"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
+                        onBlur={validateEmail}
+                        className={`pl-10 ${emailError ? "border-destructive focus:ring-destructive" : "focus:ring-blue-200"}`}
                         required
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">Format: roll_no@klh.edu.in</p>
+                    {emailError ? (
+                      <p className="text-xs text-destructive">{emailError}</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Format: roll_no@klh.edu.in</p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -94,7 +121,7 @@ export default function LoginPage() {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 focus:ring-blue-200"
                         required
                       />
                     </div>
@@ -104,17 +131,26 @@ export default function LoginPage() {
                 <CardFooter className="flex flex-col space-y-4">
                   <Button 
                     type="submit" 
-                    className="w-full bg-gradient-to-r from-klh-blue to-blue-500 hover:from-blue-600 hover:to-klh-blue" 
-                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300"
+                    disabled={isSubmitting || !!emailError}
                   >
-                    {isSubmitting ? "Logging in..." : "Log in as Student"}
+                    {isSubmitting ? 
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Logging in...
+                      </span> 
+                      : "Log in as Student"
+                    }
                   </Button>
                   
                   <div className="text-center text-sm">
                     Don't have an account?{" "}
                     <Link 
                       to="/register" 
-                      className="text-klh-blue hover:underline font-medium"
+                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium transition-colors"
                     >
                       Sign up
                     </Link>
@@ -136,11 +172,16 @@ export default function LoginPage() {
                         placeholder="name@klh.edu.in"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
+                        onBlur={validateEmail}
+                        className={`pl-10 ${emailError ? "border-destructive focus:ring-destructive" : "focus:ring-green-200"}`}
                         required
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">Format: name@klh.edu.in</p>
+                    {emailError ? (
+                      <p className="text-xs text-destructive">{emailError}</p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">Format: name@klh.edu.in</p>
+                    )}
                   </div>
                   
                   <div className="space-y-2">
@@ -152,7 +193,7 @@ export default function LoginPage() {
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10"
+                        className="pl-10 focus:ring-green-200"
                         required
                       />
                     </div>
@@ -162,17 +203,26 @@ export default function LoginPage() {
                 <CardFooter className="flex flex-col space-y-4">
                   <Button 
                     type="submit" 
-                    className="w-full bg-gradient-to-r from-secondary to-green-600 hover:from-green-600 hover:to-secondary" 
-                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all duration-300" 
+                    disabled={isSubmitting || !!emailError}
                   >
-                    {isSubmitting ? "Logging in..." : "Log in as Admin"}
+                    {isSubmitting ? 
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Logging in...
+                      </span> 
+                      : "Log in as Admin"
+                    }
                   </Button>
                   
                   <div className="text-center text-sm">
-                    Don't have an account?{" "}
+                    Already have an account?{" "}
                     <Link 
                       to="/register" 
-                      className="text-klh-blue hover:underline font-medium"
+                      className="text-green-600 hover:text-green-800 hover:underline font-medium transition-colors"
                     >
                       Sign up
                     </Link>

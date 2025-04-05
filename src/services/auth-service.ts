@@ -9,8 +9,8 @@ const STORAGE_KEY = "klh_user";
 const mockUsers: User[] = [
   {
     id: "1",
-    email: "demo@example.com",
-    name: "Demo User",
+    email: "123456@klh.edu.in",
+    name: "Student User",
     role: "student"
   },
   {

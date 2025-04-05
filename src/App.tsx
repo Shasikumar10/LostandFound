@@ -16,7 +16,6 @@ import ProfilePage from "./pages/ProfilePage";
 import LostItemsPage from "./pages/LostItemsPage";
 import FoundItemsPage from "./pages/FoundItemsPage";
 import ItemDetailPage from "./pages/ItemDetailPage";
-import MapPage from "./pages/MapPage";
 import NotFound from "./pages/NotFound";
 
 // Create a new QueryClient outside of the component
@@ -41,7 +40,6 @@ const App: React.FC = () => {
                 <Route path="/lost" element={<LostItemsPage />} />
                 <Route path="/found" element={<FoundItemsPage />} />
                 <Route path="/item/:id" element={<ItemDetailPage />} />
-                <Route path="/map" element={<MapPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

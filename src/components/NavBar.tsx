@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { User, PlusCircle, Map, School, ChevronDown } from "lucide-react";
+import { User, PlusCircle, ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,9 +29,6 @@ export function NavBar() {
           </Link>
           <Link to="/found" className="text-sm font-medium hover:text-klh-blue transition-colors">
             Found Items
-          </Link>
-          <Link to="/map" className="text-sm font-medium hover:text-klh-blue transition-colors flex items-center gap-1">
-            <Map className="h-4 w-4" /> Campus Map
           </Link>
         </div>
 
@@ -105,7 +102,7 @@ export function NavBar() {
       
       {/* Mobile navigation for Lost/Found */}
       <div className="md:hidden border-t">
-        <div className="container mx-auto grid grid-cols-3 gap-0">
+        <div className="container mx-auto grid grid-cols-2 gap-0">
           <Link 
             to="/lost" 
             className="text-center py-3 font-medium hover:bg-gray-50 transition-colors"
@@ -117,12 +114,6 @@ export function NavBar() {
             className="text-center py-3 font-medium hover:bg-gray-50 transition-colors border-l"
           >
             Found Items
-          </Link>
-          <Link 
-            to="/map" 
-            className="text-center py-3 font-medium hover:bg-gray-50 transition-colors border-l flex items-center justify-center gap-1"
-          >
-            <Map className="h-3 w-3" /> Map
           </Link>
         </div>
       </div>
