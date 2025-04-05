@@ -1,5 +1,5 @@
 
-import { Item, ItemLocation, ItemMatch, ItemStatus, MatchStatus } from "@/types";
+import { Item, ItemLocation, ItemMatch, ItemStatus, MatchStatus, ItemContact } from "@/types";
 
 // This is a mock item service
 // In a real application, this would be replaced with Supabase or API calls
@@ -86,11 +86,28 @@ const calculateSimilarity = (item1: Item, item2: Item): number => {
 };
 
 export const itemService = {
-  getItems: async (userId?: string): Promise<Item[]> => {
-    const items = loadItems();
+  getItems: async (userId?: string, status?: ItemStatus, category?: string, searchTerm?: string): Promise<Item[]> => {
+    let items = loadItems();
     
     if (userId) {
-      return items.filter(item => item.userId === userId);
+      items = items.filter(item => item.userId === userId);
+    }
+    
+    if (status) {
+      items = items.filter(item => item.status === status);
+    }
+    
+    if (category) {
+      items = items.filter(item => item.category === category);
+    }
+    
+    if (searchTerm && searchTerm.trim()) {
+      const term = searchTerm.toLowerCase().trim();
+      items = items.filter(item => 
+        item.title.toLowerCase().includes(term) || 
+        item.description.toLowerCase().includes(term) ||
+        item.location.name.toLowerCase().includes(term)
+      );
     }
     
     return items;
@@ -108,6 +125,7 @@ export const itemService = {
     status: ItemStatus,
     category: string,
     location: ItemLocation,
+    contact: ItemContact,
     imageUrl?: string
   ): Promise<Item> => {
     // Simulate network delay
@@ -123,6 +141,7 @@ export const itemService = {
       status,
       category,
       location,
+      contact,
       imageUrl,
       createdAt: new Date(),
       updatedAt: new Date()

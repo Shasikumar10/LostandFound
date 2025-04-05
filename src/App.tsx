@@ -11,6 +11,10 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import SubmitItemPage from "./pages/SubmitItemPage";
 import DashboardPage from "./pages/DashboardPage";
+import ProfilePage from "./pages/ProfilePage";
+import LostItemsPage from "./pages/LostItemsPage";
+import FoundItemsPage from "./pages/FoundItemsPage";
+import ItemDetailPage from "./pages/ItemDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +32,10 @@ const App = () => (
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/submit" element={<SubmitItemPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/lost" element={<LostItemsPage />} />
+            <Route path="/found" element={<FoundItemsPage />} />
+            <Route path="/item/:id" element={<ItemDetailPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

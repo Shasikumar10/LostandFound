@@ -21,6 +21,8 @@ export default function SubmitItemPage() {
   const [status, setStatus] = useState<ItemStatus>(ItemStatus.LOST);
   const [locationName, setLocationName] = useState("");
   const [locationDescription, setLocationDescription] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -40,7 +42,7 @@ export default function SubmitItemPage() {
       return;
     }
     
-    if (!title || !description || !category || !locationName) {
+    if (!title || !description || !category || !locationName || !contactEmail) {
       toast({
         title: "Incomplete form",
         description: "Please fill in all required fields",
@@ -64,6 +66,7 @@ export default function SubmitItemPage() {
         status,
         category,
         { name: locationName, description: locationDescription },
+        { email: contactEmail, phone: contactPhone },
         imageUrl
       );
       
@@ -206,6 +209,35 @@ export default function SubmitItemPage() {
                     value={locationDescription}
                     onChange={(e) => setLocationDescription(e.target.value)}
                   />
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="border-t pt-4">
+                    <h3 className="text-lg font-medium mb-2">Contact Information</h3>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contactEmail">Email</Label>
+                    <Input
+                      id="contactEmail"
+                      type="email"
+                      placeholder="Your email address"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contactPhone">Phone Number (Optional)</Label>
+                    <Input
+                      id="contactPhone"
+                      type="tel"
+                      placeholder="Your phone number"
+                      value={contactPhone}
+                      onChange={(e) => setContactPhone(e.target.value)}
+                    />
+                  </div>
                 </div>
                 
                 <div className="space-y-2">

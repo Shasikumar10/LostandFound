@@ -14,11 +14,19 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  phone?: string;
+  bio?: string;
+  profileImageUrl?: string;
 }
 
 export interface ItemLocation {
   name: string;
   description?: string;
+}
+
+export interface ItemContact {
+  email: string;
+  phone?: string;
 }
 
 export interface Item {
@@ -30,6 +38,7 @@ export interface Item {
   category: string;
   imageUrl?: string;
   location: ItemLocation;
+  contact: ItemContact;
   createdAt: Date;
   updatedAt: Date;
   matches?: ItemMatch[];
