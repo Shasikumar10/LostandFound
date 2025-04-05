@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
-import { User, Search, PlusCircle } from "lucide-react";
+import { User, PlusCircle } from "lucide-react";
 
 export function NavBar() {
   const { user, logout } = useAuth();
