@@ -1,4 +1,3 @@
-
 import { User } from "@/types";
 
 // This is a mock authentication service
@@ -68,5 +67,18 @@ export const authService = {
     } catch {
       return null;
     }
+  },
+
+  updateUser: (updatedUser: User): User => {
+    // Update user in mock database
+    const userIndex = mockUsers.findIndex(u => u.id === updatedUser.id);
+    if (userIndex >= 0) {
+      mockUsers[userIndex] = updatedUser;
+    }
+    
+    // Update in local storage
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
+    
+    return updatedUser;
   }
 };

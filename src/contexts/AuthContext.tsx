@@ -1,4 +1,3 @@
-
 import { User } from "@/types";
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { authService } from "@/services/auth-service";
@@ -10,6 +9,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (updatedUser: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,8 +85,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateUser = (updatedUser: User) => {
+    // Update user in local storage
+    localStorage.setItem("klh_user", JSON.stringify(updatedUser));
+    // Update user in state
+    setUser(updatedUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
