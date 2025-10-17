@@ -27,7 +27,7 @@ const convertDocToMatch = (doc: any): ItemMatch => {
 export class ItemService {
   async getItems(userId?: string): Promise<Item[]> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       let query = {};
       if (userId) {
@@ -45,7 +45,7 @@ export class ItemService {
   
   async getItemsByStatus(status: ItemStatus): Promise<Item[]> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       const items = await ItemModel.find({ status });
       return items.map(convertDocToItem);
@@ -57,7 +57,7 @@ export class ItemService {
   
   async getItem(itemId: string): Promise<Item | null> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       if (!mongoose.Types.ObjectId.isValid(itemId)) {
         return null;
@@ -82,7 +82,7 @@ export class ItemService {
     imageUrl?: string
   ): Promise<Item> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       const newItem = new ItemModel({
         userId,
@@ -110,7 +110,7 @@ export class ItemService {
   
   async updateItem(itemId: string, updates: Partial<Item>): Promise<Item | null> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       if (!mongoose.Types.ObjectId.isValid(itemId)) {
         return null;
@@ -131,7 +131,7 @@ export class ItemService {
   
   async deleteItem(itemId: string): Promise<boolean> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       if (!mongoose.Types.ObjectId.isValid(itemId)) {
         return false;
@@ -160,7 +160,7 @@ export class ItemService {
   
   async getMatches(userId?: string): Promise<ItemMatch[]> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       if (!userId) {
         const matches = await ItemMatchModel.find({});
@@ -188,7 +188,7 @@ export class ItemService {
   
   async updateMatchStatus(matchId: string, status: MatchStatus): Promise<ItemMatch | null> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       if (!mongoose.Types.ObjectId.isValid(matchId)) {
         return null;
@@ -209,7 +209,7 @@ export class ItemService {
   
   private async findMatches(newItem: Item): Promise<void> {
     try {
-      const mongoose = await connectToDatabase();
+      await connectToDatabase();
       
       // Only match lost items with found items
       const itemsToCompare = await ItemModel.find({

@@ -1,24 +1,23 @@
 import { User } from "@/types";
+import connectToDatabase from "@/lib/db";
+import UserModel from "@/models/User";
+import mongoose from "mongoose";
 
 // Simulate API delay for development
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// In-memory user storage for development
-const users: Record<string, User & { password: string }> = {};
-
 class AuthService {
   async getCurrentUser(): Promise<User | null> {
     // This would typically check a JWT token or session
-    // For now, we'll return null
+    // For now, we'll return null as we're transitioning to MongoDB
     return null;
   }
 
   async login(email: string, password: string): Promise<User> {
     try {
-      // Simulate API delay
-      await delay(500);
+      await connectToDatabase();
       
-      const user = users[email];
+      const user = await UserModel.findOne({ email }).lean();
       
       if (!user) {
         throw new Error('User not found. Please check your email or register.');
@@ -29,9 +28,16 @@ class AuthService {
         throw new Error('Invalid password');
       }
       
-      // Return user without password
-      const { password: _, ...userWithoutPassword } = user;
-      return userWithoutPassword;
+      // Convert MongoDB _id to id for frontend compatibility
+      const userWithId = {
+        ...user,
+        id: user._id.toString()
+      };
+      
+      delete userWithId._id;
+      delete userWithId.password;
+      
+      return userWithId as User;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -40,57 +46,75 @@ class AuthService {
   
   async register(email: string, password: string, name?: string, role: "student" | "admin" = "student"): Promise<User> {
     try {
-      // Simulate API delay
-      await delay(500);
+      await connectToDatabase();
       
       // Check if user already exists
-      if (users[email]) {
+      const existingUser = await UserModel.findOne({ email });
+      
+      if (existingUser) {
         throw new Error('A user with this email already exists.');
       }
       
-      // Create new user with random ID
-      const id = Math.random().toString(36).substring(2, 15);
-      const newUser = {
-        id,
+      // Create new user
+      const newUser = await UserModel.create({
         email,
-        password,
+        password, // In a real app, you would hash the password
         name: name || '',
         role,
-        profileImageUrl: "",
-        bio: "",
-        phone: ""
+        profileImageUrl: ""
+      });
+      
+      // Convert MongoDB _id to id for frontend compatibility
+      const userWithId = {
+        ...newUser.toObject(),
+        id: newUser._id.toString()
       };
       
-      // Store user in memory
-      users[email] = newUser;
+      delete userWithId._id;
+      delete userWithId.password;
       
-      // Return user without password
-      const { password: _, ...userWithoutPassword } = newUser;
-      return userWithoutPassword;
+      return userWithId as User;
     } catch (error) {
       console.error("Registration error:", error);
       throw error;
     }
   }
-
+  
   async logout(): Promise<void> {
-    // In a real app, you would invalidate the token or session
-    // For now, we'll just simulate a delay
-    await delay(300);
+    // In a real app, you would invalidate the token on the server
+    await delay(300); // Simulate API call for development
   }
-
-  updateUser(updatedUser: User): User {
+  
+  async updateUser(updatedUser: User): Promise<User> {
     try {
-      // Simulate API delay
-      delay(300);
+      await connectToDatabase();
       
-      // Update user in memory if exists
-      if (users[updatedUser.email]) {
-        const { password } = users[updatedUser.email];
-        users[updatedUser.email] = { ...updatedUser, password };
+      const userId = updatedUser.id;
+      
+      // Remove id field and prepare update data
+      const { id, ...updateData } = updatedUser;
+      
+      // Update user in database
+      const user = await UserModel.findByIdAndUpdate(
+        userId,
+        updateData,
+        { new: true }
+      ).lean();
+      
+      if (!user) {
+        throw new Error('User not found');
       }
       
-      return updatedUser;
+      // Convert MongoDB _id to id for frontend compatibility
+      const userWithId = {
+        ...user,
+        id: user._id.toString()
+      };
+      
+      delete userWithId._id;
+      delete userWithId.password;
+      
+      return userWithId as User;
     } catch (error) {
       console.error("Update user error:", error);
       throw error;

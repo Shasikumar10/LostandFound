@@ -25,14 +25,4 @@ const ItemMatchSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Create the model safely for browser environment
-let ItemMatchModel;
-try {
-  // Check if model already exists to prevent overwriting
-  ItemMatchModel = mongoose.model('ItemMatch');
-} catch (error) {
-  // Model doesn't exist yet, create it
-  ItemMatchModel = mongoose.model('ItemMatch', ItemMatchSchema);
-}
-
-export default ItemMatchModel;
+export default mongoose.models.ItemMatch || mongoose.model('ItemMatch', ItemMatchSchema);
