@@ -16,18 +16,18 @@ export function NavBar() {
   const { user, logout } = useAuth();
 
   return (
-    <nav className="w-full bg-white shadow-sm">
+    <nav className="w-full bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
       <div className="container mx-auto flex items-center justify-between py-4">
         <Link to="/" className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-klh-blue">KLH</span>
+          <span className="text-2xl font-bold text-white">KLH</span>
           <span className="text-xl font-medium">Lost & Found</span>
         </Link>
 
         <div className="hidden md:flex items-center space-x-6">
-          <Link to="/lost" className="text-sm font-medium hover:text-klh-blue transition-colors">
+          <Link to="/lost-items" className="text-sm font-medium text-white hover:text-blue-200 transition-colors">
             Lost Items
           </Link>
-          <Link to="/found" className="text-sm font-medium hover:text-klh-blue transition-colors">
+          <Link to="/found-items" className="text-sm font-medium text-white hover:text-blue-200 transition-colors">
             Found Items
           </Link>
         </div>
@@ -35,8 +35,8 @@ export function NavBar() {
         <div className="flex items-center gap-4">
           {user ? (
             <>
-              <Link to="/submit">
-                <Button size="sm" className="hidden md:flex">
+              <Link to="/submit-item">
+                <Button size="sm" className="hidden md:flex bg-white text-blue-700 hover:bg-blue-100">
                   <PlusCircle className="h-4 w-4 mr-2" />
                   Submit Item
                 </Button>
@@ -44,7 +44,7 @@ export function NavBar() {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-1">
+                  <Button variant="outline" size="sm" className="flex items-center gap-1 bg-white text-blue-700 border-white hover:bg-blue-100">
                     <User className="h-4 w-4" />
                     {user.name ? user.name.split(' ')[0] : 'Account'}
                     <ChevronDown className="h-3 w-3 ml-1 opacity-70" />
@@ -90,11 +90,14 @@ export function NavBar() {
           ) : (
             <>
               <Link to="/login">
-                <Button variant="outline" size="sm">Login</Button>
+                <Button variant="outline" size="sm" className="bg-white text-blue-700 hover:bg-blue-100">
+                  <User className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
               </Link>
               <Link to="/register">
-                <Button size="sm">Sign Up</Button>
-              </Link>
+                  <Button size="sm" className="bg-blue-100 text-blue-700 hover:bg-blue-200 ml-2">Sign Up</Button>
+                </Link>
             </>
           )}
         </div>

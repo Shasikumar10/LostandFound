@@ -1,311 +1,281 @@
+import { Item, ItemStatus, Location, Contact, ItemMatch, MatchStatus } from "@/types";
+import connectToDatabase from "@/lib/db";
+import ItemModel from "@/models/Item";
+import ItemMatchModel from "@/models/ItemMatch";
+import mongoose from "mongoose";
 
-import { Item, ItemLocation, ItemMatch, ItemStatus, MatchStatus, ItemContact } from "@/types";
-
-// This is a mock item service
-// In a real application, this would be replaced with Supabase or API calls
-
-const ITEMS_STORAGE_KEY = "klh_items";
-const MATCHES_STORAGE_KEY = "klh_matches";
-
-// Load items from localStorage or use empty array as default
-const loadItems = (): Item[] => {
-  const itemsJson = localStorage.getItem(ITEMS_STORAGE_KEY);
-  if (!itemsJson) return [];
-  
-  try {
-    const items = JSON.parse(itemsJson) as Item[];
-    // Convert string dates back to Date objects
-    return items.map(item => ({
-      ...item,
-      createdAt: new Date(item.createdAt),
-      updatedAt: new Date(item.updatedAt)
-    }));
-  } catch {
-    return [];
-  }
+// Helper function to convert MongoDB _id to id for frontend
+const convertDocToItem = (doc: any): Item => {
+  const item = doc.toObject ? doc.toObject() : doc;
+  return {
+    ...item,
+    id: item._id.toString(),
+    _id: undefined
+  };
 };
 
-// Load matches from localStorage or use empty array as default
-const loadMatches = (): ItemMatch[] => {
-  const matchesJson = localStorage.getItem(MATCHES_STORAGE_KEY);
-  if (!matchesJson) return [];
-  
-  try {
-    const matches = JSON.parse(matchesJson) as ItemMatch[];
-    // Convert string dates back to Date objects
-    return matches.map(match => ({
-      ...match,
-      createdAt: new Date(match.createdAt)
-    }));
-  } catch {
-    return [];
-  }
+// Helper function to convert MongoDB _id to id for matches
+const convertDocToMatch = (doc: any): ItemMatch => {
+  const match = doc.toObject ? doc.toObject() : doc;
+  return {
+    ...match,
+    id: match._id.toString(),
+    _id: undefined
+  };
 };
 
-// Save items to localStorage
-const saveItems = (items: Item[]) => {
-  localStorage.setItem(ITEMS_STORAGE_KEY, JSON.stringify(items));
-};
-
-// Save matches to localStorage
-const saveMatches = (matches: ItemMatch[]) => {
-  localStorage.setItem(MATCHES_STORAGE_KEY, JSON.stringify(matches));
-};
-
-// Mock function for AI similarity calculation
-const calculateSimilarity = (item1: Item, item2: Item): number => {
-  // In a real AI system, this would use image and text embeddings to calculate similarity
-  
-  // Simple mock implementation:
-  // 1. Category match: 0.4
-  // 2. Words in title match: up to 0.3
-  // 3. Words in description match: up to 0.3
-  
-  let similarity = 0;
-  
-  // Category match
-  if (item1.category === item2.category) {
-    similarity += 0.4;
+export class ItemService {
+  async getItems(userId?: string): Promise<Item[]> {
+    try {
+      const mongoose = await connectToDatabase();
+      
+      let query = {};
+      if (userId) {
+        query = { userId };
+      }
+      
+      const items = await ItemModel.find(query);
+      return items.map(convertDocToItem);
+    } catch (error) {
+      console.error("Error fetching items:", error);
+      // Return empty array for now to prevent app from crashing
+      return [];
+    }
   }
   
-  // Title similarity (crude word matching)
-  const title1Words = item1.title.toLowerCase().split(/\s+/);
-  const title2Words = item2.title.toLowerCase().split(/\s+/);
-  const titleMatches = title1Words.filter(word => title2Words.includes(word)).length;
-  const titleSimilarity = Math.min(0.3, 0.3 * (titleMatches / Math.max(title1Words.length, title2Words.length)));
-  similarity += titleSimilarity;
-  
-  // Description similarity (crude word matching)
-  const desc1Words = item1.description.toLowerCase().split(/\s+/);
-  const desc2Words = item2.description.toLowerCase().split(/\s+/);
-  const descMatches = desc1Words.filter(word => desc2Words.includes(word)).length;
-  const descSimilarity = Math.min(0.3, 0.3 * (descMatches / Math.max(desc1Words.length, desc2Words.length)));
-  similarity += descSimilarity;
-  
-  return similarity;
-};
-
-export const itemService = {
-  getItems: async (userId?: string, status?: ItemStatus, category?: string, searchTerm?: string): Promise<Item[]> => {
-    let items = loadItems();
-    
-    if (userId) {
-      items = items.filter(item => item.userId === userId);
+  async getItemsByStatus(status: ItemStatus): Promise<Item[]> {
+    try {
+      const mongoose = await connectToDatabase();
+      
+      const items = await ItemModel.find({ status });
+      return items.map(convertDocToItem);
+    } catch (error) {
+      console.error("Error fetching items by status:", error);
+      return [];
     }
-    
-    if (status) {
-      items = items.filter(item => item.status === status);
-    }
-    
-    if (category) {
-      items = items.filter(item => item.category === category);
-    }
-    
-    if (searchTerm && searchTerm.trim()) {
-      const term = searchTerm.toLowerCase().trim();
-      items = items.filter(item => 
-        item.title.toLowerCase().includes(term) || 
-        item.description.toLowerCase().includes(term) ||
-        item.location.name.toLowerCase().includes(term)
-      );
-    }
-    
-    return items;
-  },
+  }
   
-  getItem: async (id: string): Promise<Item | null> => {
-    const items = loadItems();
-    return items.find(item => item.id === id) || null;
-  },
+  async getItem(itemId: string): Promise<Item | null> {
+    try {
+      const mongoose = await connectToDatabase();
+      
+      if (!mongoose.Types.ObjectId.isValid(itemId)) {
+        return null;
+      }
+      
+      const item = await ItemModel.findById(itemId);
+      return item ? convertDocToItem(item) : null;
+    } catch (error) {
+      console.error("Error fetching item:", error);
+      return null;
+    }
+  }
   
-  createItem: async (
+  async createItem(
     userId: string,
     title: string,
     description: string,
     status: ItemStatus,
     category: string,
-    location: ItemLocation,
-    contact: ItemContact,
+    location: Location,
+    contact: Contact,
     imageUrl?: string
-  ): Promise<Item> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const items = loadItems();
-    
-    const newItem: Item = {
-      id: crypto.randomUUID(),
-      userId,
-      title,
-      description,
-      status,
-      category,
-      location,
-      contact,
-      imageUrl,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    
-    items.push(newItem);
-    saveItems(items);
-    
-    // Process matching if this is a new item
-    await itemService.processMatching(newItem);
-    
-    return newItem;
-  },
-  
-  updateItem: async (
-    id: string,
-    updates: Partial<Omit<Item, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>
-  ): Promise<Item> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const items = loadItems();
-    const itemIndex = items.findIndex(item => item.id === id);
-    
-    if (itemIndex === -1) {
-      throw new Error("Item not found");
-    }
-    
-    const updatedItem: Item = {
-      ...items[itemIndex],
-      ...updates,
-      updatedAt: new Date()
-    };
-    
-    items[itemIndex] = updatedItem;
-    saveItems(items);
-    
-    return updatedItem;
-  },
-  
-  deleteItem: async (id: string): Promise<void> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const items = loadItems();
-    const filteredItems = items.filter(item => item.id !== id);
-    
-    if (filteredItems.length === items.length) {
-      throw new Error("Item not found");
-    }
-    
-    saveItems(filteredItems);
-    
-    // Also delete any associated matches
-    const matches = loadMatches();
-    const filteredMatches = matches.filter(
-      match => match.lostItemId !== id && match.foundItemId !== id
-    );
-    
-    saveMatches(filteredMatches);
-  },
-  
-  getMatches: async (userId?: string): Promise<ItemMatch[]> => {
-    const matches = loadMatches();
-    const items = loadItems();
-    
-    // Enhance matches with item details
-    const enhancedMatches = matches.map(match => {
-      const lostItem = items.find(item => item.id === match.lostItemId);
-      const foundItem = items.find(item => item.id === match.foundItemId);
+  ): Promise<Item> {
+    try {
+      const mongoose = await connectToDatabase();
       
-      return {
-        ...match,
-        lostItem,
-        foundItem
-      };
-    });
-    
-    if (userId) {
-      // Return matches where either the lost or found item belongs to the user
-      return enhancedMatches.filter(
-        match => 
-          (match.lostItem && match.lostItem.userId === userId) ||
-          (match.foundItem && match.foundItem.userId === userId)
+      const newItem = new ItemModel({
+        userId,
+        title,
+        description,
+        status,
+        category,
+        location,
+        contact,
+        imageUrl
+      });
+      
+      const savedItem = await newItem.save();
+      const itemWithId = convertDocToItem(savedItem);
+      
+      // Check for potential matches
+      this.findMatches(itemWithId);
+      
+      return itemWithId;
+    } catch (error) {
+      console.error("Error creating item:", error);
+      throw error;
+    }
+  }
+  
+  async updateItem(itemId: string, updates: Partial<Item>): Promise<Item | null> {
+    try {
+      const mongoose = await connectToDatabase();
+      
+      if (!mongoose.Types.ObjectId.isValid(itemId)) {
+        return null;
+      }
+      
+      const updatedItem = await ItemModel.findByIdAndUpdate(
+        itemId,
+        { ...updates, updatedAt: new Date() },
+        { new: true }
       );
-    }
-    
-    return enhancedMatches;
-  },
-  
-  updateMatchStatus: async (
-    matchId: string,
-    status: MatchStatus
-  ): Promise<ItemMatch> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const matches = loadMatches();
-    const matchIndex = matches.findIndex(match => match.id === matchId);
-    
-    if (matchIndex === -1) {
-      throw new Error("Match not found");
-    }
-    
-    const updatedMatch: ItemMatch = {
-      ...matches[matchIndex],
-      status
-    };
-    
-    matches[matchIndex] = updatedMatch;
-    saveMatches(matches);
-    
-    return updatedMatch;
-  },
-  
-  // AI matching logic
-  processMatching: async (newItem: Item): Promise<void> => {
-    // Simulate network delay for AI processing
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const items = loadItems();
-    const matches = loadMatches();
-    
-    // For a lost item, find potential matching found items
-    // For a found item, find potential matching lost items
-    const potentialMatches = items.filter(item => 
-      item.id !== newItem.id && 
-      ((newItem.status === ItemStatus.LOST && item.status === ItemStatus.FOUND) ||
-       (newItem.status === ItemStatus.FOUND && item.status === ItemStatus.LOST))
-    );
-    
-    for (const potentialMatch of potentialMatches) {
-      // Calculate similarity score using AI (mocked here)
-      const similarity = calculateSimilarity(newItem, potentialMatch);
       
-      // If similarity is above threshold, create a match
-      if (similarity > 0.4) {
-        const lostItemId = newItem.status === ItemStatus.LOST ? newItem.id : potentialMatch.id;
-        const foundItemId = newItem.status === ItemStatus.FOUND ? newItem.id : potentialMatch.id;
+      return updatedItem ? convertDocToItem(updatedItem) : null;
+    } catch (error) {
+      console.error("Error updating item:", error);
+      return null;
+    }
+  }
+  
+  async deleteItem(itemId: string): Promise<boolean> {
+    try {
+      const mongoose = await connectToDatabase();
+      
+      if (!mongoose.Types.ObjectId.isValid(itemId)) {
+        return false;
+      }
+      
+      const result = await ItemModel.findByIdAndDelete(itemId);
+      
+      if (!result) {
+        return false;
+      }
+      
+      // Also delete any matches associated with this item
+      await ItemMatchModel.deleteMany({
+        $or: [
+          { lostItemId: itemId },
+          { foundItemId: itemId }
+        ]
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      return false;
+    }
+  }
+  
+  async getMatches(userId?: string): Promise<ItemMatch[]> {
+    try {
+      const mongoose = await connectToDatabase();
+      
+      if (!userId) {
+        const matches = await ItemMatchModel.find({});
+        return matches.map(convertDocToMatch);
+      }
+      
+      // Find all items belonging to the user
+      const userItems = await ItemModel.find({ userId });
+      const userItemIds = userItems.map(item => item._id.toString());
+      
+      // Find matches that involve any of the user's items
+      const matches = await ItemMatchModel.find({
+        $or: [
+          { lostItemId: { $in: userItemIds } },
+          { foundItemId: { $in: userItemIds } }
+        ]
+      });
+      
+      return matches.map(convertDocToMatch);
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+      return [];
+    }
+  }
+  
+  async updateMatchStatus(matchId: string, status: MatchStatus): Promise<ItemMatch | null> {
+    try {
+      const mongoose = await connectToDatabase();
+      
+      if (!mongoose.Types.ObjectId.isValid(matchId)) {
+        return null;
+      }
+      
+      const updatedMatch = await ItemMatchModel.findByIdAndUpdate(
+        matchId,
+        { status, updatedAt: new Date() },
+        { new: true }
+      );
+      
+      return updatedMatch ? convertDocToMatch(updatedMatch) : null;
+    } catch (error) {
+      console.error("Error updating match status:", error);
+      return null;
+    }
+  }
+  
+  private async findMatches(newItem: Item): Promise<void> {
+    try {
+      const mongoose = await connectToDatabase();
+      
+      // Only match lost items with found items
+      const itemsToCompare = await ItemModel.find({
+        _id: { $ne: newItem.id },
+        status: newItem.status === ItemStatus.LOST ? ItemStatus.FOUND : ItemStatus.LOST
+      });
+      
+      for (const item of itemsToCompare) {
+        const itemWithId = convertDocToItem(item);
         
-        // Check if this match already exists
-        const existingMatchIndex = matches.findIndex(
-          m => m.lostItemId === lostItemId && m.foundItemId === foundItemId
+        // Calculate match score based on similarity
+        const matchScore = this.calculateMatchScore(
+          newItem.status === ItemStatus.LOST ? newItem : itemWithId,
+          newItem.status === ItemStatus.FOUND ? newItem : itemWithId
         );
         
-        if (existingMatchIndex === -1) {
-          // Create new match
-          const newMatch: ItemMatch = {
-            id: crypto.randomUUID(),
-            lostItemId,
-            foundItemId,
-            status: MatchStatus.PENDING,
-            confidence: similarity,
-            createdAt: new Date()
-          };
+        // If score is above threshold, create a match
+        if (matchScore >= 0.5) {
+          const lostItem = newItem.status === ItemStatus.LOST ? newItem : itemWithId;
+          const foundItem = newItem.status === ItemStatus.FOUND ? newItem : itemWithId;
           
-          matches.push(newMatch);
-        } else {
-          // Update existing match if needed
-          matches[existingMatchIndex].confidence = similarity;
+          // Create a new match
+          const newMatch = new ItemMatchModel({
+            lostItemId: lostItem.id,
+            foundItemId: foundItem.id,
+            matchScore,
+            status: MatchStatus.PENDING
+          });
+          
+          await newMatch.save();
         }
       }
+    } catch (error) {
+      console.error("Error finding matches:", error);
+    }
+  }
+  
+  private calculateMatchScore(item1: Item, item2: Item): number {
+    // Simple matching algorithm based on category and title similarity
+    let score = 0;
+    
+    // Same category is a good indicator
+    if (item1.category.toLowerCase() === item2.category.toLowerCase()) {
+      score += 0.3;
     }
     
-    saveMatches(matches);
+    // Check title similarity
+    const title1Words = item1.title.toLowerCase().split(/\s+/);
+    const title2Words = item2.title.toLowerCase().split(/\s+/);
+    
+    const commonWords = title1Words.filter(word => 
+      word.length > 3 && title2Words.includes(word)
+    );
+    
+    if (commonWords.length > 0) {
+      score += 0.4 * (commonWords.length / Math.max(title1Words.length, title2Words.length));
+    }
+    
+    // Check location similarity
+    if (item1.location.name.toLowerCase().includes(item2.location.name.toLowerCase()) ||
+        item2.location.name.toLowerCase().includes(item1.location.name.toLowerCase())) {
+      score += 0.3;
+    }
+    
+    return score;
   }
-};
+}
+
+export const itemService = new ItemService();

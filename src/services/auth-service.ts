@@ -1,109 +1,101 @@
-
 import { User } from "@/types";
 
-// This is a mock authentication service
-// In a real application, this would be replaced with Supabase auth
+// Simulate API delay for development
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const STORAGE_KEY = "klh_user";
+// In-memory user storage for development
+const users: Record<string, User & { password: string }> = {};
 
-const mockUsers: User[] = [
-  {
-    id: "1",
-    email: "123456@klh.edu.in",
-    name: "Student User",
-    role: "student"
-  },
-  {
-    id: "2",
-    email: "admin@klh.edu.in",
-    name: "Admin User",
-    role: "admin"
+class AuthService {
+  async getCurrentUser(): Promise<User | null> {
+    // This would typically check a JWT token or session
+    // For now, we'll return null
+    return null;
   }
-];
 
-export const authService = {
-  login: async (email: string, password: string): Promise<User> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const user = mockUsers.find(u => u.email === email);
-    
-    if (!user) {
-      throw new Error("Invalid credentials");
-    }
-    
-    // In a real auth system, we would verify the password here
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-    
-    return user;
-  },
-  
-  register: async (email: string, password: string, name?: string, role: "student" | "admin" = "student"): Promise<User> => {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Validate email format based on role
-    if (role === "student" && !email.match(/^[0-9]+@klh\.edu\.in$/)) {
-      throw new Error("Student email must be in format: roll_no@klh.edu.in");
-    } else if (role === "admin" && !email.match(/^[a-zA-Z]+@klh\.edu\.in$/)) {
-      throw new Error("Admin email must be in format: name@klh.edu.in");
-    }
-    
-    if (mockUsers.some(u => u.email === email)) {
-      throw new Error("User already exists");
-    }
-    
-    const newUser: User = {
-      id: String(mockUsers.length + 1),
-      email,
-      name,
-      role
-    };
-    
-    mockUsers.push(newUser);
-    
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-    
-    return newUser;
-  },
-  
-  logout: async (): Promise<void> => {
-    localStorage.removeItem(STORAGE_KEY);
-  },
-  
-  getCurrentUser: (): User | null => {
-    const userJson = localStorage.getItem(STORAGE_KEY);
-    
-    if (!userJson) {
-      return null;
-    }
-    
+  async login(email: string, password: string): Promise<User> {
     try {
-      return JSON.parse(userJson) as User;
-    } catch {
-      return null;
+      // Simulate API delay
+      await delay(500);
+      
+      const user = users[email];
+      
+      if (!user) {
+        throw new Error('User not found. Please check your email or register.');
+      }
+      
+      // In a real app, you would hash the password and compare
+      if (password !== user.password) {
+        throw new Error('Invalid password');
+      }
+      
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      return userWithoutPassword;
+    } catch (error) {
+      console.error("Login error:", error);
+      throw error;
     }
-  },
-
-  updateUser: (updatedUser: User): User => {
-    // Update user in mock database
-    const userIndex = mockUsers.findIndex(u => u.id === updatedUser.id);
-    if (userIndex >= 0) {
-      mockUsers[userIndex] = updatedUser;
-    }
-    
-    // Update in local storage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUser));
-    
-    return updatedUser;
-  },
-  
-  validateEmail: (email: string, role: "student" | "admin"): boolean => {
-    if (role === "student") {
-      return /^[0-9]+@klh\.edu\.in$/.test(email);
-    } else if (role === "admin") {
-      return /^[a-zA-Z]+@klh\.edu\.in$/.test(email);
-    }
-    return false;
   }
-};
+  
+  async register(email: string, password: string, name?: string, role: "student" | "admin" = "student"): Promise<User> {
+    try {
+      // Simulate API delay
+      await delay(500);
+      
+      // Check if user already exists
+      if (users[email]) {
+        throw new Error('A user with this email already exists.');
+      }
+      
+      // Create new user with random ID
+      const id = Math.random().toString(36).substring(2, 15);
+      const newUser = {
+        id,
+        email,
+        password,
+        name: name || '',
+        role,
+        profileImageUrl: "",
+        bio: "",
+        phone: ""
+      };
+      
+      // Store user in memory
+      users[email] = newUser;
+      
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = newUser;
+      return userWithoutPassword;
+    } catch (error) {
+      console.error("Registration error:", error);
+      throw error;
+    }
+  }
+
+  async logout(): Promise<void> {
+    // In a real app, you would invalidate the token or session
+    // For now, we'll just simulate a delay
+    await delay(300);
+  }
+
+  updateUser(updatedUser: User): User {
+    try {
+      // Simulate API delay
+      delay(300);
+      
+      // Update user in memory if exists
+      if (users[updatedUser.email]) {
+        const { password } = users[updatedUser.email];
+        users[updatedUser.email] = { ...updatedUser, password };
+      }
+      
+      return updatedUser;
+    } catch (error) {
+      console.error("Update user error:", error);
+      throw error;
+    }
+  }
+}
+
+export const authService = new AuthService();

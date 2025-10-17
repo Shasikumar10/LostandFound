@@ -1,35 +1,24 @@
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  role?: "student" | "admin";
+  phone?: string;
+  bio?: string;
+  profileImageUrl?: string;
+}
 
 export enum ItemStatus {
   LOST = "lost",
   FOUND = "found"
 }
 
-export enum MatchStatus {
-  PENDING = "pending",
-  APPROVED = "approved",
-  DENIED = "denied"
-}
-
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  phone?: string;
-  bio?: string;
-  profileImageUrl?: string;
-  role?: "student" | "admin";
-}
-
-export interface ItemLocation {
+export interface Location {
   name: string;
   description?: string;
-  coordinates?: {
-    latitude: number;
-    longitude: number;
-  };
 }
 
-export interface ItemContact {
+export interface Contact {
   email: string;
   phone?: string;
 }
@@ -41,21 +30,26 @@ export interface Item {
   description: string;
   status: ItemStatus;
   category: string;
+  location: Location;
+  contact: Contact;
   imageUrl?: string;
-  location: ItemLocation;
-  contact: ItemContact;
-  createdAt: Date;
-  updatedAt: Date;
-  matches?: ItemMatch[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export enum MatchStatus {
+  PENDING = "pending",
+  ACCEPTED = "accepted",
+  REJECTED = "rejected"
 }
 
 export interface ItemMatch {
   id: string;
   lostItemId: string;
   foundItemId: string;
-  lostItem?: Item;
-  foundItem?: Item;
-  status: MatchStatus;
-  confidence: number;
-  createdAt: Date;
+  lostItem: Item;
+  foundItem: Item;
+  matchScore: number;
+  status: MatchStatus | "pending" | "accepted" | "rejected";
+  createdAt: string;
 }
